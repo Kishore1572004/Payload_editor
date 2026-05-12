@@ -57,6 +57,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .st-valid{color:var(--success);background:var(--success-bg);}
 .st-invalid{color:var(--danger);background:var(--danger-bg);white-space:normal;word-break:break-word;flex:1 1 100%;}
 .st-empty{color:var(--text-3);}
+.issues-btn{font-size:10.5px;padding:2px 7px;border-radius:3px;border:1px solid #f1b9b2;background:#fff6f5;color:var(--danger);cursor:pointer;display:none;}
+.issues-btn.show{display:inline-block;}
+.issues-panel{display:none;padding:6px 10px;border-bottom:1px solid var(--border);background:#fff7f6;max-height:120px;overflow:auto;}
+.issues-panel.open{display:block;}
+.issues-list{margin:0;padding-left:16px;font-family:var(--mono);font-size:11px;color:var(--danger);}
 
 .search-row{padding:5px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;background:var(--surface2);flex-shrink:0;}
 .search-wrap{flex:1;position:relative;}
@@ -248,6 +253,10 @@ let editors = [
 let search = [
   {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:false,regex:false}},
   {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:false,regex:false}}
+];
+let issueState = [
+  {open:false,items:[]},
+  {open:false,items:[]}
 ];
 let isWrap = true;
 let modalCb = null;
@@ -563,6 +572,65 @@ function renderHl(i) {
   hlb.innerHTML = html;
 }
 
+function detectLikelyIssues(text) {
+  const lines = text.split('\n');
+  const issues = [];
+  const sig = [];
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (t) sig.push({idx:i, t});
+  }
+
+  for (let s = 0; s < sig.length - 1; s++) {
+    const cur = sig[s];
+    const nxt = sig[s + 1];
+    const c = cur.t;
+    const n = nxt.t;
+    const nextIsClose = n.startsWith('}') || n.startsWith(']');
+    if (nextIsClose) continue;
+
+    const isProp = /^"[^"\\]*(?:\\.[^"\\]*)*"\s*:/.test(c);
+    const endsWithComma = /,\s*$/.test(c);
+    const endsWithOpen = /[\[{]\s*$/.test(c);
+
+    if (isProp && !endsWithComma && !endsWithOpen) {
+      issues.push({line: cur.idx + 1, msg: 'Likely missing comma at end of property'});
+      continue;
+    }
+
+    const isArrayValue = /^(".*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null|\{|\[)/.test(c);
+    if (!isProp && isArrayValue && !endsWithComma && !endsWithOpen) {
+      issues.push({line: cur.idx + 1, msg: 'Likely missing comma between array items'});
+    }
+  }
+  return issues;
+}
+
+function renderIssues(i) {
+  const btn = document.getElementById('issues-btn-'+i);
+  const panel = document.getElementById('issues-panel-'+i);
+  const list = document.getElementById('issues-list-'+i);
+  if (!btn || !panel || !list) return;
+
+  const items = issueState[i].items || [];
+  if (!items.length) {
+    btn.classList.remove('show');
+    panel.classList.remove('open');
+    list.innerHTML = '';
+    return;
+  }
+
+  btn.classList.add('show');
+  btn.textContent = `Issues (${items.length})`;
+  list.innerHTML = items.map(it => `<li>Line ${it.line}: ${escHtml(it.msg)}</li>`).join('');
+  panel.classList.toggle('open', issueState[i].open);
+}
+
+function toggleIssues(i) {
+  issueState[i].open = !issueState[i].open;
+  renderIssues(i);
+}
+
 /* ═══════════════════════════════════════════
    JSON OPERATIONS
 ═══════════════════════════════════════════ */
@@ -574,15 +642,24 @@ function validateJson(i) {
   const v = ta.value.trim();
   if (!v) {
     cw?.classList.remove('invalid-bg');
+    issueState[i].items = [];
+    issueState[i].open = false;
+    renderIssues(i);
     stEl.textContent=''; stEl.className='panel-status st-empty'; return;
   }
   try {
     JSON.parse(v);
     cw?.classList.remove('invalid-bg');
+    issueState[i].items = [];
+    issueState[i].open = false;
+    renderIssues(i);
     stEl.textContent='✓ Valid JSON'; stEl.className='panel-status st-valid';
   } catch(err) {
     cw?.classList.add('invalid-bg');
-    stEl.textContent='✗ '+err.message; stEl.className='panel-status st-invalid';
+    const likely = detectLikelyIssues(ta.value);
+    issueState[i].items = [{line: 1, msg: err.message}, ...likely];
+    renderIssues(i);
+    stEl.textContent='✗ Invalid JSON'; stEl.className='panel-status st-invalid';
   }
 }
 
@@ -701,7 +778,11 @@ function renderPanel(idx) {
         onblur="endRename(${idx})"
         onkeydown="if(event.key==='Enter'||event.key==='Escape')endRename(${idx})"/>
       <span class="rename-hint">✎ click title to rename</span>
+      <button class="issues-btn" id="issues-btn-${idx}" onclick="toggleIssues(${idx})">Issues (0)</button>
       <span class="panel-status st-empty" id="st-${idx}"></span>
+    </div>
+    <div class="issues-panel" id="issues-panel-${idx}">
+      <ul class="issues-list" id="issues-list-${idx}"></ul>
     </div>
     <div class="search-row">
       <div class="search-wrap">
