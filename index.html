@@ -63,7 +63,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px 4px 26px;font-family:var(--mono);font-size:11.5px;color:var(--text);outline:none;transition:border-color .12s;}
 .search-input:focus{border-color:var(--border-focus);}
 .search-input::placeholder{color:var(--text-3);}
-.search-ico{position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:12px;pointer-events:none;}
 .search-hits{font-family:var(--mono);font-size:10.5px;color:var(--text-3);min-width:58px;text-align:right;white-space:nowrap;}
 
 .fields-row{padding:5px 8px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;background:var(--surface);flex-shrink:0;}
@@ -94,7 +93,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .ln-track{
   position:absolute;
   top:0;left:0;right:0;
-  padding-top:12px;  /* matches textarea padding-top */
+  padding-top:12px;
   pointer-events:none;
   will-change:transform;
 }
@@ -106,7 +105,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   padding-right:7px;
   overflow:hidden;
   white-space:nowrap;
-  /* height set per item via JS to match visual rows */
 }
 
 /* Editor stack */
@@ -126,7 +124,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   z-index:1;
 }
 .hl-body{
-  /* Must exactly mirror textarea metrics */
   position:absolute;
   top:0;left:0;right:0;
   font-family:'IBM Plex Mono',monospace;
@@ -228,12 +225,11 @@ mark.h.c{
 const DEFAULT_FIELDS = ['sessionId','correlationId','tacticId','eventId','sourceId','sessionid','emailDeploymentId'];
 const SK = 'pe_v8';
 
-// These MUST match the CSS for .ta exactly
-const TA_FONT_SIZE = 12;   // px
-const TA_LINE_H    = 1.65; // unitless multiplier
-const TA_PAD_TOP   = 12;   // px  (padding-top of .ta)
-const TA_PAD_L     = 10;   // px  (padding-left of .ta)
-const TA_PAD_R     = 12;   // px  (padding-right of .ta)
+const TA_FONT_SIZE = 12;
+const TA_LINE_H    = 1.65;
+const TA_PAD_TOP   = 12;
+const TA_PAD_L     = 10;
+const TA_PAD_R     = 12;
 
 /* ═══════════════════════════════════════════
    STATE
@@ -244,7 +240,7 @@ let editors = [
 ];
 let search = [{q:'',matches:[],cur:-1},{q:'',matches:[],cur:-1}];
 let modalCb = null;
-let _lhPx   = 0;  // line height in px, cached
+let _lhPx   = 0;
 
 /* ═══════════════════════════════════════════
    UTILS
@@ -263,7 +259,6 @@ function escAttr(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* Hidden div used to measure how many visual rows a line wraps to */
 let _md = null;
 function getMeasurer(contentWidth) {
   if (!_md) {
@@ -430,7 +425,7 @@ function syncScroll(i) {
 }
 
 /* ═══════════════════════════════════════════
-   SEARCH & HIGHLIGHT
+   SEARCH & HIGHLIGHT  —  case-sensitive
 ═══════════════════════════════════════════ */
 function onSearch(i, val) {
   const s = search[i];
@@ -439,12 +434,11 @@ function onSearch(i, val) {
   if (!val.trim()) { if (hEl) hEl.textContent=''; renderHl(i); return; }
   const ta = document.getElementById('ta-'+i);
   if (!ta) return;
-  const text  = ta.value;
-  const lower = text.toLowerCase();
-  const q     = val.toLowerCase();
+  const text = ta.value;
+  // Exact / case-sensitive match — 'source' ≠ 'Source' ≠ 'SOURCE'
   let pos = 0;
   for (;;) {
-    const ix = lower.indexOf(q, pos);
+    const ix = text.indexOf(val, pos);
     if (ix === -1) break;
     s.matches.push(ix);
     pos = ix + 1;
@@ -474,13 +468,11 @@ function scrollToMatch(i, charIdx) {
   const track = document.getElementById('ln-track-'+i);
   if (!ta) return;
 
-  // which logical line does charIdx fall on?
   const beforeMatch = ta.value.substring(0, charIdx);
   const logLineIdx  = (beforeMatch.match(/\n/g) || []).length;
 
   const lh    = getLhPx();
   const divs  = track ? track.querySelectorAll('.ln-item') : [];
-  // sum heights of lines 0..logLineIdx-1 + pad
   let offsetY = TA_PAD_TOP;
   for (let n = 0; n < logLineIdx && n < divs.length; n++) {
     offsetY += parseFloat(divs[n].style.height) || lh;
@@ -489,7 +481,6 @@ function scrollToMatch(i, charIdx) {
   ta.scrollTop = Math.max(0, offsetY - halfView);
   syncScroll(i);
 
-  // also select the text
   ta.focus();
   ta.setSelectionRange(charIdx, charIdx + s_q(i));
 }
@@ -604,7 +595,7 @@ function generateAll(){ [0,1].forEach(generate); }
 function formatAll()  { [0,1].forEach(formatPanel); }
 
 /* ═══════════════════════════════════════════
-   onInput — called on every keystroke
+   onInput
 ═══════════════════════════════════════════ */
 function onInput(i) {
   validateJson(i);
