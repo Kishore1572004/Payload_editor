@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Professional JSON GUID Generator</title>
+  <title>Professional Payload Editor</title>
 
   <style>
     * {
@@ -93,6 +93,8 @@
     }
 
     textarea {
+      line-height: 1.5;
+      tab-size: 2;
       width: 100%;
       min-height: 420px;
       resize: vertical;
@@ -103,6 +105,11 @@
       font-family: Consolas, monospace;
       background: #f8fafc;
       outline: none;
+    }
+
+    textarea.invalid-json {
+      border: 2px solid #dc2626 !important;
+      background: #fef2f2 !important;
     }
 
     textarea:focus {
@@ -158,6 +165,25 @@
       color: #dc2626;
     }
 
+    .search-box {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+    }
+
+    .warning-box {
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      color: #9a3412;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 13px;
+      display: none;
+    }
+
     .editor-actions {
       display: flex;
       gap: 10px;
@@ -175,13 +201,7 @@
 </head>
 <body>
 
-  <h1>Professional Dual JSON GUID Generator</h1>
-
-  <div class="toolbar">
-    <button class="primary" onclick="generateAll()">Generate All GUIDs</button>
-    <button class="secondary" onclick="formatAll()">Format JSON</button>
-    <button class="danger" onclick="clearAll()">Clear All</button>
-  </div>
+  <h1>Professional Payload Editor</h1>
 
   <div class="container" id="editorContainer"></div>
 
@@ -236,6 +256,13 @@
               </div>
             </div>
 
+            <input
+              type="text"
+              class="search-box"
+              placeholder="Search inside this editor (Ctrl + F alternative)..."
+              oninput="searchInEditor(${editor.id}, this.value)"
+            />
+
             <textarea
               id="editor-${editor.id}"
               placeholder="Paste JSON here..."
@@ -244,10 +271,13 @@
 
             <div class="status" id="status-${editor.id}"></div>
 
+            <div class="warning-box" id="warning-${editor.id}"></div>
+
             <div class="editor-actions">
               <button class="success" onclick="generateForEditor(${editor.id})">Generate</button>
               <button class="secondary" onclick="copyEditor(${editor.id})">Copy</button>
               <button class="primary" onclick="formatEditor(${editor.id})">Format</button>
+              <button class="secondary" onclick="toggleLineWrap(${editor.id})">Toggle Wrap</button>
               <button class="danger" onclick="clearEditor(${editor.id})">Clear</button>
             </div>
           </div>
@@ -271,9 +301,17 @@
         return;
       }
 
+      const existingJson = document.getElementById(`editor-${editorId}`)?.value || '';
+
       editor.fields.push(value);
-      input.value = '';
       renderEditors();
+
+      setTimeout(() => {
+        document.getElementById(`editor-${editorId}`).value = existingJson;
+        validateJson(editorId);
+      }, 50);
+
+      input.value = '';
     }
 
     function validateJson(editorId) {
@@ -282,6 +320,7 @@
 
       if (!textarea.value.trim()) {
         status.innerHTML = '';
+        textarea.classList.remove('invalid-json');
         return;
       }
 
@@ -289,9 +328,11 @@
         JSON.parse(textarea.value);
         status.innerHTML = '✔ Valid JSON';
         status.className = 'status valid';
+        textarea.classList.remove('invalid-json');
       } catch (e) {
         status.innerHTML = '✘ Invalid JSON: ' + e.message;
         status.className = 'status invalid';
+        textarea.classList.add('invalid-json');
       }
     }
 
@@ -318,6 +359,10 @@
 
     function generateForEditor(editorId) {
       const textarea = document.getElementById(`editor-${editorId}`);
+      const warning = document.getElementById(`warning-${editorId}`);
+
+      warning.style.display = 'none';
+      warning.innerHTML = '';
 
       if (!textarea.value.trim()) {
         alert('Paste JSON first');
@@ -330,12 +375,41 @@
         const checked = [...document.querySelectorAll(`input[data-editor='${editorId}']:checked`)]
           .map(x => x.value);
 
+        const matchedFields = [];
+
+        function findFields(obj) {
+          if (Array.isArray(obj)) {
+            obj.forEach(findFields);
+            return;
+          }
+
+          if (obj !== null && typeof obj === 'object') {
+            Object.keys(obj).forEach(key => {
+              if (checked.includes(key)) {
+                matchedFields.push(key);
+              }
+
+              findFields(obj[key]);
+            });
+          }
+        }
+
+        findFields(json);
+
+        const unmatched = checked.filter(x => !matchedFields.includes(x));
+
+        if (unmatched.length > 0) {
+          warning.style.display = 'block';
+          warning.innerHTML = 'Field names not matched in JSON: ' + unmatched.join(', ');
+        }
+
         updateJsonFields(json, checked);
 
         textarea.value = JSON.stringify(json, null, 2);
 
         validateJson(editorId);
       } catch (e) {
+        validateJson(editorId);
         alert('Invalid JSON');
       }
     }
@@ -374,6 +448,31 @@
 
     function formatAll() {
       editors.forEach(e => formatEditor(e.id));
+    }
+
+    function searchInEditor(editorId, value) {
+      const textarea = document.getElementById(`editor-${editorId}`);
+
+      if (!value) return;
+
+      const startIndex = textarea.value.toLowerCase().indexOf(value.toLowerCase());
+
+      if (startIndex >= 0) {
+        textarea.focus();
+        textarea.setSelectionRange(startIndex, startIndex + value.length);
+      }
+    }
+
+    function toggleLineWrap(editorId) {
+      const textarea = document.getElementById(`editor-${editorId}`);
+
+      if (textarea.style.whiteSpace === 'pre') {
+        textarea.style.whiteSpace = 'pre-wrap';
+        textarea.style.overflowX = 'hidden';
+      } else {
+        textarea.style.whiteSpace = 'pre';
+        textarea.style.overflowX = 'scroll';
+      }
     }
 
     renderEditors();
