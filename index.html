@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professional JSON GUID Generator</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      padding: 20px;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #0f172a;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .success {
+      background: #16a34a;
+      color: white;
+    }
+
+    .danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .secondary {
+      background: #475569;
+      color: white;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+    }
+
+    .editor-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .editor-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-family: Consolas, monospace;
+      background: #f8fafc;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #2563eb;
+      background: white;
+    }
+
+    .field-section {
+      margin-bottom: 15px;
+    }
+
+    .field-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .field-item {
+      background: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-add {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    input[type='text'] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .valid {
+      color: #15803d;
+    }
+
+    .invalid {
+      color: #dc2626;
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note {
+      margin-top: 30px;
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Professional Dual JSON GUID Generator</h1>
+
+  <div class="toolbar">
+    <button class="primary" onclick="generateAll()">Generate All GUIDs</button>
+    <button class="secondary" onclick="formatAll()">Format JSON</button>
+    <button class="danger" onclick="clearAll()">Clear All</button>
+  </div>
+
+  <div class="container" id="editorContainer"></div>
+
+  <div class="footer-note">
+    GitHub Pages Ready • Dynamic Fields • JSON Validation • Copy Support
+  </div>
+
+  <script>
+    const defaultFields = [
+      'sessionId',
+      'correlationId',
+      'tacticId',
+      'eventId',
+      'sourceId',
+      'sessionid',
+      'emailDeploymentId'
+    ];
+
+    const editors = [
+      { id: 1, title: 'Editor 1', fields: [...defaultFields] },
+      { id: 2, title: 'Editor 2', fields: [...defaultFields] }
+    ];
+
+    function renderEditors() {
+      const container = document.getElementById('editorContainer');
+      container.innerHTML = '';
+
+      editors.forEach(editor => {
+        const fieldHtml = editor.fields.map(field => `
+          <label class="field-item">
+            <input type="checkbox" checked data-editor="${editor.id}" value="${field}" />
+            ${field}
+          </label>
+        `).join('');
+
+        container.innerHTML += `
+          <div class="editor-card">
+            <div class="editor-header">
+              <div class="editor-title">${editor.title}</div>
+            </div>
+
+            <div class="field-section">
+              <strong>GUID Fields</strong>
+
+              <div class="field-list" id="field-list-${editor.id}">
+                ${fieldHtml}
+              </div>
+
+              <div class="field-add">
+                <input type="text" id="new-field-${editor.id}" placeholder="Add dynamic field name" />
+                <button class="primary" onclick="addField(${editor.id})">Add</button>
+              </div>
+            </div>
+
+            <textarea
+              id="editor-${editor.id}"
+              placeholder="Paste JSON here..."
+              oninput="validateJson(${editor.id})"
+            ></textarea>
+
+            <div class="status" id="status-${editor.id}"></div>
+
+            <div class="editor-actions">
+              <button class="success" onclick="generateForEditor(${editor.id})">Generate</button>
+              <button class="secondary" onclick="copyEditor(${editor.id})">Copy</button>
+              <button class="primary" onclick="formatEditor(${editor.id})">Format</button>
+              <button class="danger" onclick="clearEditor(${editor.id})">Clear</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addField(editorId) {
+      const input = document.getElementById(`new-field-${editorId}`);
+      const value = input.value.trim();
+
+      if (!value) {
+        alert('Enter field name');
+        return;
+      }
+
+      const editor = editors.find(e => e.id === editorId);
+
+      if (editor.fields.includes(value)) {
+        alert('Field already exists');
+        return;
+      }
+
+      editor.fields.push(value);
+      input.value = '';
+      renderEditors();
+    }
+
+    function validateJson(editorId) {
+      const textarea = document.getElementById(`editor-${editorId}`);
+      const status = document.getElementById(`status-${editorId}`);
+
+      if (!textarea.value.trim()) {
+        status.innerHTML = '';
+        return;
+      }
+
+      try {
+        JSON.parse(textarea.value);
+        status.innerHTML = '✔ Valid JSON';
+        status.className = 'status valid';
+      } catch (e) {
+        status.innerHTML = '✘ Invalid JSON: ' + e.message;
+        status.className = 'status invalid';
+      }
+    }
+
+    function generateGuid() {
+      return crypto.randomUUID();
+    }
+
+    function updateJsonFields(obj, selectedFields) {
+      if (Array.isArray(obj)) {
+        obj.forEach(item => updateJsonFields(item, selectedFields));
+        return;
+      }
+
+      if (obj !== null && typeof obj === 'object') {
+        Object.keys(obj).forEach(key => {
+          if (selectedFields.includes(key)) {
+            obj[key] = generateGuid();
+          }
+
+          updateJsonFields(obj[key], selectedFields);
+        });
+      }
+    }
+
+    function generateForEditor(editorId) {
+      const textarea = document.getElementById(`editor-${editorId}`);
+
+      if (!textarea.value.trim()) {
+        alert('Paste JSON first');
+        return;
+      }
+
+      try {
+        const json = JSON.parse(textarea.value);
+
+        const checked = [...document.querySelectorAll(`input[data-editor='${editorId}']:checked`)]
+          .map(x => x.value);
+
+        updateJsonFields(json, checked);
+
+        textarea.value = JSON.stringify(json, null, 2);
+
+        validateJson(editorId);
+      } catch (e) {
+        alert('Invalid JSON');
+      }
+    }
+
+    function generateAll() {
+      editors.forEach(e => generateForEditor(e.id));
+    }
+
+    function copyEditor(editorId) {
+      const textarea = document.getElementById(`editor-${editorId}`);
+
+      navigator.clipboard.writeText(textarea.value)
+        .then(() => alert('Copied successfully'));
+    }
+
+    function clearEditor(editorId) {
+      document.getElementById(`editor-${editorId}`).value = '';
+      document.getElementById(`status-${editorId}`).innerHTML = '';
+    }
+
+    function clearAll() {
+      editors.forEach(e => clearEditor(e.id));
+    }
+
+    function formatEditor(editorId) {
+      const textarea = document.getElementById(`editor-${editorId}`);
+
+      try {
+        const json = JSON.parse(textarea.value);
+        textarea.value = JSON.stringify(json, null, 2);
+        validateJson(editorId);
+      } catch {
+        alert('Invalid JSON');
+      }
+    }
+
+    function formatAll() {
+      editors.forEach(e => formatEditor(e.id));
+    }
+
+    renderEditors();
+  </script>
+
+</body>
+</html>
