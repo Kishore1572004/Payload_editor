@@ -1,482 +1,520 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Professional Payload Editor</title>
-
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f7fb;
-      padding: 20px;
-      color: #222;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 25px;
-      color: #0f172a;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: 0.2s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-    }
-
-    .primary {
-      background: #2563eb;
-      color: white;
-    }
-
-    .success {
-      background: #16a34a;
-      color: white;
-    }
-
-    .danger {
-      background: #dc2626;
-      color: white;
-    }
-
-    .secondary {
-      background: #475569;
-      color: white;
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-    }
-
-    .editor-card {
-      background: white;
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    }
-
-    .editor-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .editor-title {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    textarea {
-      line-height: 1.5;
-      tab-size: 2;
-      width: 100%;
-      min-height: 420px;
-      resize: vertical;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 14px;
-      font-family: Consolas, monospace;
-      background: #f8fafc;
-      outline: none;
-    }
-
-    textarea.invalid-json {
-      border: 2px solid #dc2626 !important;
-      background: #fef2f2 !important;
-    }
-
-    textarea:focus {
-      border-color: #2563eb;
-      background: white;
-    }
-
-    .field-section {
-      margin-bottom: 15px;
-    }
-
-    .field-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .field-item {
-      background: #e2e8f0;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .field-add {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    input[type='text'] {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-    }
-
-    .status {
-      margin-top: 10px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .valid {
-      color: #15803d;
-    }
-
-    .invalid {
-      color: #dc2626;
-    }
-
-    .search-box {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-    }
-
-    .warning-box {
-      background: #fff7ed;
-      border: 1px solid #fdba74;
-      color: #9a3412;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 10px;
-      font-size: 13px;
-      display: none;
-    }
-
-    .editor-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .footer-note {
-      margin-top: 30px;
-      text-align: center;
-      color: #64748b;
-      font-size: 13px;
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Payload Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f5f6f8;--surface:#fff;--surface2:#f0f2f5;--border:#e2e5ea;
+  --border-focus:#3b6bdb;--text:#1a1d23;--text-2:#4b5260;--text-3:#8b93a4;
+  --accent:#3b6bdb;--accent-bg:#edf2ff;
+  --success:#1a7f5a;--success-bg:#e8f7f1;
+  --danger:#c0392b;--danger-bg:#fdf0ee;
+  --warning:#b45309;--warning-bg:#fffbeb;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --radius:8px;--radius-sm:5px;
+  --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
+  --ln-w:42px; /* line number gutter width */
+  --sidebar-w:210px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+ 
+/* ── Topbar ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:20;}
+.brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
+.brand-icon{width:26px;height:26px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;}
+.topbar-sep{width:1px;height:22px;background:var(--border);}
+.topbar-sub{font-size:12px;color:var(--text-3);}
+.topbar-right{margin-left:auto;display:flex;gap:6px;}
+ 
+/* ── Buttons ── */
+.btn{font-family:var(--sans);font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background .12s,border-color .12s,color .12s;white-space:nowrap;line-height:1;}
+.btn:hover{background:var(--surface2);border-color:#c8cdd6;color:var(--text);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:#2f5cc7;border-color:#2f5cc7;color:#fff;}
+.btn-success{background:var(--success-bg);border-color:#b3dece;color:var(--success);}
+.btn-success:hover{background:#d1f0e5;color:var(--success);}
+.btn-danger{background:transparent;border-color:var(--border);color:var(--text-3);}
+.btn-danger:hover{background:var(--danger-bg);border-color:#e8b4ae;color:var(--danger);}
+.btn-sm{font-size:11.5px;padding:4px 9px;}
+.btn-icon{padding:5px 8px;font-size:13px;}
+ 
+/* ── Workspace ── */
+.workspace{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+ 
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;width:var(--sidebar-w);flex-shrink:0;transition:width .2s ease,opacity .2s ease;overflow:hidden;}
+.sidebar.collapsed{width:36px;}
+ 
+.sidebar-header{padding:0 8px;height:40px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;min-width:0;}
+.sidebar-title-wrap{display:flex;align-items:center;gap:6px;overflow:hidden;}
+.sidebar-title{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);white-space:nowrap;overflow:hidden;}
+.sidebar-count{font-family:var(--mono);font-size:10px;color:var(--text-3);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1px 6px;flex-shrink:0;white-space:nowrap;}
+ 
+.sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .sidebar-count,
+.sidebar.collapsed .file-list,
+.sidebar.collapsed .sidebar-footer{display:none;}
+ 
+.toggle-sidebar{width:24px;height:24px;background:none;border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text-3);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .1s,color .1s;}
+.toggle-sidebar:hover{background:var(--surface2);color:var(--text);}
+.sidebar.collapsed .toggle-sidebar{margin:auto;}
+ 
+.file-list{flex:1;overflow-y:auto;padding:5px;}
+.file-list::-webkit-scrollbar{width:4px;}
+.file-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.file-empty{padding:12px 8px;font-size:11.5px;color:var(--text-3);line-height:1.5;}
+ 
+.file-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;transition:background .1s;min-width:0;}
+.file-item:hover{background:var(--surface2);}
+.file-item.active{background:var(--accent-bg);border-color:#c0d0f5;}
+.file-icon{font-size:10px;color:var(--text-3);flex-shrink:0;font-family:var(--mono);}
+.file-item.active .file-icon{color:var(--accent);}
+.file-name{font-size:12px;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.file-item.active .file-name{color:var(--accent);font-weight:500;}
+.file-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:none;}
+.file-item.has-content .file-dot{display:block;background:var(--success);}
+.file-del{width:18px;height:18px;background:none;border:none;cursor:pointer;border-radius:3px;color:var(--text-3);font-size:10px;display:none;align-items:center;justify-content:center;flex-shrink:0;transition:background .1s,color .1s;}
+.file-item:hover .file-del{display:flex;}
+.file-del:hover{background:var(--danger-bg);color:var(--danger);}
+ 
+.sidebar-footer{padding:8px;border-top:1px solid var(--border);flex-shrink:0;}
+.btn-new-file{width:100%;justify-content:center;font-size:12px;color:var(--accent);border-color:#c0d0f5;background:var(--accent-bg);}
+.btn-new-file:hover{background:#dde8ff;color:var(--accent);}
+ 
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.editors-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;flex:1;overflow:hidden;min-height:0;}
+ 
+/* ── Editor panel ── */
+.editor-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.editor-panel:focus-within{border-color:#b8c9f0;box-shadow:0 2px 8px rgba(0,0,0,.08),0 0 0 3px rgba(59,107,219,.06);}
+ 
+.panel-header{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.panel-title{font-size:12.5px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.panel-status{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:3px;flex-shrink:0;}
+.st-valid{color:var(--success);background:var(--success-bg);}
+.st-invalid{color:var(--danger);background:var(--danger-bg);}
+.st-empty{color:var(--text-3);}
+ 
+/* search */
+.search-row{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px;background:var(--surface2);flex-shrink:0;}
+.search-wrap{flex:1;position:relative;}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px 5px 27px;font-family:var(--mono);font-size:11.5px;color:var(--text);outline:none;transition:border-color .12s;}
+.search-input:focus{border-color:var(--border-focus);}
+.search-input::placeholder{color:var(--text-3);}
+.search-ico{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:12px;pointer-events:none;}
+.search-hits{font-family:var(--mono);font-size:10.5px;color:var(--text-3);min-width:52px;text-align:right;white-space:nowrap;}
+ 
+/* fields */
+.fields-row{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap;background:var(--surface);flex-shrink:0;}
+.field-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:11px;color:var(--text-2);transition:all .1s;user-select:none;}
+.field-chip:has(input:checked){background:var(--accent-bg);border-color:#a8bef0;color:var(--accent);}
+.field-chip input{display:none;}
+.chip-check{width:11px;height:11px;border-radius:2px;border:1.5px solid #c0c8d8;background:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;color:transparent;transition:all .1s;flex-shrink:0;}
+.field-chip:has(input:checked) .chip-check{background:var(--accent);border-color:var(--accent);color:#fff;}
+.chip-del{background:none;border:none;cursor:pointer;color:#a0a8b8;font-size:9px;line-height:1;padding:0 0 0 2px;transition:color .1s;}
+.chip-del:hover{color:var(--danger);}
+.add-field-row{display:none;align-items:center;gap:5px;width:100%;margin-top:4px;}
+.add-field-row.open{display:flex;}
+.add-field-input{flex:1;background:var(--surface);border:1px solid var(--border-focus);border-radius:var(--radius-sm);padding:4px 8px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none;}
+ 
+/* ── Code area with line numbers ── */
+.code-wrap{flex:1;display:flex;overflow:hidden;min-height:0;background:#fdfdfe;position:relative;}
+.code-wrap.invalid-bg{background:#fff8f7;}
+ 
+.line-nums{width:var(--ln-w);flex-shrink:0;background:#f8f9fb;border-right:1px solid var(--border);overflow:hidden;padding:12px 0;user-select:none;pointer-events:none;}
+.line-nums-inner{font-family:var(--mono);font-size:12px;line-height:1.65;color:#b0b8c8;text-align:right;padding-right:8px;white-space:pre;}
+ 
+.code-area{flex:1;resize:none;border:none;outline:none;background:transparent;font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text);padding:12px 12px 12px 10px;tab-size:2;white-space:pre-wrap;overflow:auto;min-height:0;word-break:break-all;}
+.code-area::placeholder{color:var(--text-3);}
+.code-area.nowrap{white-space:pre;word-break:normal;overflow-x:scroll;}
+ 
+/* warn */
+.warn-bar{display:none;padding:5px 12px;background:var(--warning-bg);border-top:1px solid #fde68a;font-size:11px;color:var(--warning);flex-shrink:0;}
+.warn-bar.on{display:block;}
+ 
+/* action bar */
+.action-bar{padding:7px 10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:5px;background:var(--surface2);flex-shrink:0;flex-wrap:wrap;}
+.action-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+ 
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,18,26,.35);backdrop-filter:blur(2px);z-index:100;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.12);padding:22px 24px;width:340px;animation:mIn .15s ease;}
+@keyframes mIn{from{opacity:0;transform:translateY(-6px) scale(.98);}to{opacity:1;transform:none;}}
+.modal-title{font-size:14px;font-weight:600;margin-bottom:14px;}
+.modal-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;margin-bottom:16px;transition:border-color .12s;}
+.modal-input:focus{border-color:var(--border-focus);}
+.modal-footer{display:flex;gap:7px;justify-content:flex-end;}
+ 
+*::-webkit-scrollbar{width:5px;height:5px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background:#d4d8e0;border-radius:3px;}
+</style>
 </head>
 <body>
-
-  <h1>Professional Payload Editor</h1>
-
-  <div class="container" id="editorContainer"></div>
-
-  <div class="footer-note">
-    GitHub Pages Ready • Dynamic Fields • JSON Validation • Copy Support
+ 
+<div class="topbar">
+  <div class="brand"><div class="brand-icon">P</div>Payload Editor</div>
+  <div class="topbar-sep"></div>
+  <span class="topbar-sub">JSON · GUID Generator</span>
+  <div class="topbar-right">
+    <button class="btn" onclick="formatAll()">Format All</button>
+    <button class="btn btn-primary" onclick="generateAll()">▶ Generate All</button>
   </div>
-
-  <script>
-    const defaultFields = [
-      'sessionId',
-      'correlationId',
-      'tacticId',
-      'eventId',
-      'sourceId',
-      'sessionid',
-      'emailDeploymentId'
-    ];
-
-    const editors = [
-      { id: 1, title: 'Editor 1', fields: [...defaultFields] },
-      { id: 2, title: 'Editor 2', fields: [...defaultFields] }
-    ];
-
-    function renderEditors() {
-      const container = document.getElementById('editorContainer');
-      container.innerHTML = '';
-
-      editors.forEach(editor => {
-        const fieldHtml = editor.fields.map(field => `
-          <label class="field-item">
-            <input type="checkbox" checked data-editor="${editor.id}" value="${field}" />
-            ${field}
-          </label>
-        `).join('');
-
-        container.innerHTML += `
-          <div class="editor-card">
-            <div class="editor-header">
-              <div class="editor-title">${editor.title}</div>
-            </div>
-
-            <div class="field-section">
-              <strong>GUID Fields</strong>
-
-              <div class="field-list" id="field-list-${editor.id}">
-                ${fieldHtml}
-              </div>
-
-              <div class="field-add">
-                <input type="text" id="new-field-${editor.id}" placeholder="Add dynamic field name" />
-                <button class="primary" onclick="addField(${editor.id})">Add</button>
-              </div>
-            </div>
-
-            <input
-              type="text"
-              class="search-box"
-              placeholder="Search inside this editor (Ctrl + F alternative)..."
-              oninput="searchInEditor(${editor.id}, this.value)"
-            />
-
-            <textarea
-              id="editor-${editor.id}"
-              placeholder="Paste JSON here..."
-              oninput="validateJson(${editor.id})"
-            ></textarea>
-
-            <div class="status" id="status-${editor.id}"></div>
-
-            <div class="warning-box" id="warning-${editor.id}"></div>
-
-            <div class="editor-actions">
-              <button class="success" onclick="generateForEditor(${editor.id})">Generate</button>
-              <button class="secondary" onclick="copyEditor(${editor.id})">Copy</button>
-              <button class="primary" onclick="formatEditor(${editor.id})">Format</button>
-              <button class="secondary" onclick="toggleLineWrap(${editor.id})">Toggle Wrap</button>
-              <button class="danger" onclick="clearEditor(${editor.id})">Clear</button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function addField(editorId) {
-      const input = document.getElementById(`new-field-${editorId}`);
-      const value = input.value.trim();
-
-      if (!value) {
-        alert('Enter field name');
-        return;
-      }
-
-      const editor = editors.find(e => e.id === editorId);
-
-      if (editor.fields.includes(value)) {
-        alert('Field already exists');
-        return;
-      }
-
-      const existingJson = document.getElementById(`editor-${editorId}`)?.value || '';
-
-      editor.fields.push(value);
-      renderEditors();
-
-      setTimeout(() => {
-        document.getElementById(`editor-${editorId}`).value = existingJson;
-        validateJson(editorId);
-      }, 50);
-
-      input.value = '';
-    }
-
-    function validateJson(editorId) {
-      const textarea = document.getElementById(`editor-${editorId}`);
-      const status = document.getElementById(`status-${editorId}`);
-
-      if (!textarea.value.trim()) {
-        status.innerHTML = '';
-        textarea.classList.remove('invalid-json');
-        return;
-      }
-
-      try {
-        JSON.parse(textarea.value);
-        status.innerHTML = '✔ Valid JSON';
-        status.className = 'status valid';
-        textarea.classList.remove('invalid-json');
-      } catch (e) {
-        status.innerHTML = '✘ Invalid JSON: ' + e.message;
-        status.className = 'status invalid';
-        textarea.classList.add('invalid-json');
-      }
-    }
-
-    function generateGuid() {
-      return crypto.randomUUID();
-    }
-
-    function updateJsonFields(obj, selectedFields) {
-      if (Array.isArray(obj)) {
-        obj.forEach(item => updateJsonFields(item, selectedFields));
-        return;
-      }
-
-      if (obj !== null && typeof obj === 'object') {
-        Object.keys(obj).forEach(key => {
-          if (selectedFields.includes(key)) {
-            obj[key] = generateGuid();
-          }
-
-          updateJsonFields(obj[key], selectedFields);
-        });
-      }
-    }
-
-    function generateForEditor(editorId) {
-      const textarea = document.getElementById(`editor-${editorId}`);
-      const warning = document.getElementById(`warning-${editorId}`);
-
-      warning.style.display = 'none';
-      warning.innerHTML = '';
-
-      if (!textarea.value.trim()) {
-        alert('Paste JSON first');
-        return;
-      }
-
-      try {
-        const json = JSON.parse(textarea.value);
-
-        const checked = [...document.querySelectorAll(`input[data-editor='${editorId}']:checked`)]
-          .map(x => x.value);
-
-        const matchedFields = [];
-
-        function findFields(obj) {
-          if (Array.isArray(obj)) {
-            obj.forEach(findFields);
-            return;
-          }
-
-          if (obj !== null && typeof obj === 'object') {
-            Object.keys(obj).forEach(key => {
-              if (checked.includes(key)) {
-                matchedFields.push(key);
-              }
-
-              findFields(obj[key]);
-            });
-          }
-        }
-
-        findFields(json);
-
-        const unmatched = checked.filter(x => !matchedFields.includes(x));
-
-        if (unmatched.length > 0) {
-          warning.style.display = 'block';
-          warning.innerHTML = 'Field names not matched in JSON: ' + unmatched.join(', ');
-        }
-
-        updateJsonFields(json, checked);
-
-        textarea.value = JSON.stringify(json, null, 2);
-
-        validateJson(editorId);
-      } catch (e) {
-        validateJson(editorId);
-        alert('Invalid JSON');
-      }
-    }
-
-    function generateAll() {
-      editors.forEach(e => generateForEditor(e.id));
-    }
-
-    function copyEditor(editorId) {
-      const textarea = document.getElementById(`editor-${editorId}`);
-
-      navigator.clipboard.writeText(textarea.value)
-        .then(() => alert('Copied successfully'));
-    }
-
-    function clearEditor(editorId) {
-      document.getElementById(`editor-${editorId}`).value = '';
-      document.getElementById(`status-${editorId}`).innerHTML = '';
-    }
-
-    function clearAll() {
-      editors.forEach(e => clearEditor(e.id));
-    }
-
-    function formatEditor(editorId) {
-      const textarea = document.getElementById(`editor-${editorId}`);
-
-      try {
-        const json = JSON.parse(textarea.value);
-        textarea.value = JSON.stringify(json, null, 2);
-        validateJson(editorId);
-      } catch {
-        alert('Invalid JSON');
-      }
-    }
-
-    function formatAll() {
-      editors.forEach(e => formatEditor(e.id));
-    }
-
-    function searchInEditor(editorId, value) {
-      const textarea = document.getElementById(`editor-${editorId}`);
-
-      if (!value) return;
-
-      const startIndex = textarea.value.toLowerCase().indexOf(value.toLowerCase());
-
-      if (startIndex >= 0) {
-        textarea.focus();
-        textarea.setSelectionRange(startIndex, startIndex + value.length);
-      }
-    }
-
-    function toggleLineWrap(editorId) {
-      const textarea = document.getElementById(`editor-${editorId}`);
-
-      if (textarea.style.whiteSpace === 'pre') {
-        textarea.style.whiteSpace = 'pre-wrap';
-        textarea.style.overflowX = 'hidden';
-      } else {
-        textarea.style.whiteSpace = 'pre';
-        textarea.style.overflowX = 'scroll';
-      }
-    }
-
-    renderEditors();
-  </script>
-
+</div>
+ 
+<div class="workspace">
+ 
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title-wrap">
+        <span class="sidebar-title">Files</span>
+        <span class="sidebar-count" id="fileCount">0/20</span>
+      </div>
+      <button class="toggle-sidebar" onclick="toggleSidebar()" title="Collapse / Expand">◀</button>
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <div class="sidebar-footer">
+      <button class="btn btn-new-file" onclick="newFile()">+ New File</button>
+    </div>
+  </aside>
+ 
+  <!-- Editors -->
+  <main class="main">
+    <div class="editors-row">
+      <div class="editor-panel" id="panel-0"></div>
+      <div class="editor-panel" id="panel-1"></div>
+    </div>
+  </main>
+ 
+</div>
+ 
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">New File</div>
+    <input class="modal-input" id="modalInput" placeholder="File name…"/>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmModal()">Save</button>
+    </div>
+  </div>
+</div>
+ 
+<script>
+const DEFAULT_FIELDS=['sessionId','correlationId','tacticId','eventId','sourceId','sessionid','emailDeploymentId'];
+const MAX_FILES=20, SK='pe_v5';
+ 
+let files=[], activeFileId=null;
+let editors=[
+  {fields:[...DEFAULT_FIELDS],customFields:[],fileId:null},
+  {fields:[...DEFAULT_FIELDS],customFields:[],fileId:null}
+];
+let searchState=[{q:'',matches:[],idx:-1},{q:'',matches:[],idx:-1}];
+let modalCb=null, lastFocused=0, sidebarOpen=true;
+ 
+/* ── Persist ── */
+function save(){
+  [0,1].forEach(i=>{
+    const ta=document.getElementById('ta-'+i);
+    if(ta&&editors[i].fileId){const f=files.find(f=>f.id===editors[i].fileId);if(f)f.content=ta.value;}
+  });
+  try{localStorage.setItem(SK,JSON.stringify({files,activeFileId,sidebarOpen,editors:editors.map(e=>({fields:e.fields,customFields:e.customFields,fileId:e.fileId||null}))}));}catch(e){}
+}
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SK)||'{}');
+    files=s.files||[];activeFileId=s.activeFileId||null;
+    sidebarOpen=s.sidebarOpen!==false;
+    if(s.editors&&s.editors.length===2)editors=s.editors.map(e=>({fields:e.fields||[...DEFAULT_FIELDS],customFields:e.customFields||[],fileId:e.fileId||null}));
+  }catch(e){}
+  if(!files.find(f=>f.id===activeFileId))activeFileId=files[0]?.id||null;
+}
+ 
+/* ── Sidebar collapse ── */
+function toggleSidebar(){
+  sidebarOpen=!sidebarOpen;
+  const sb=document.getElementById('sidebar');
+  const btn=sb.querySelector('.toggle-sidebar');
+  sb.classList.toggle('collapsed',!sidebarOpen);
+  btn.textContent=sidebarOpen?'◀':'▶';
+  btn.title=sidebarOpen?'Collapse files':'Expand files';
+  save();
+}
+ 
+/* ── Files ── */
+function fileObj(name){return{id:crypto.randomUUID(),name:name||'File '+(files.length+1),content:''};}
+function newFile(){
+  if(files.length>=MAX_FILES){alert('Maximum 20 files.');return;}
+  openModal('New File','',name=>{
+    const f=fileObj(name||'File '+(files.length+1));
+    files.push(f);activeFileId=f.id;save();renderSidebar();
+  });
+}
+function deleteFile(id){
+  if(!confirm('Delete this file?'))return;
+  files=files.filter(f=>f.id!==id);
+  if(activeFileId===id)activeFileId=files[0]?.id||null;
+  editors.forEach(e=>{if(e.fileId===id)e.fileId=null;});
+  save();renderAll();
+}
+function renameFile(id){
+  const f=files.find(f=>f.id===id);if(!f)return;
+  openModal('Rename File',f.name,name=>{if(name.trim()){f.name=name.trim();save();renderSidebar();updateTitles();}});
+}
+ 
+/* ── Modal ── */
+function openModal(title,val,cb){
+  modalCb=cb;
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalInput').value=val;
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>{const i=document.getElementById('modalInput');i.focus();i.select();},60);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');modalCb=null;}
+function confirmModal(){const v=document.getElementById('modalInput').value;closeModal();if(modalCb)modalCb(v);}
+document.getElementById('modalInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmModal();if(e.key==='Escape')closeModal();});
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal();});
+ 
+/* ── Fields ── */
+function toggleAddField(i){
+  const r=document.getElementById('add-row-'+i);if(!r)return;
+  const open=r.classList.toggle('open');
+  if(open)setTimeout(()=>document.getElementById('add-inp-'+i)?.focus(),40);
+}
+function addField(i){
+  const inp=document.getElementById('add-inp-'+i);
+  const val=inp?.value?.trim();if(!val)return;
+  const e=editors[i];if(e.fields.includes(val)){alert('Already exists.');return;}
+  e.fields.push(val);e.customFields.push(val);
+  save();renderPanel(i);
+}
+function removeField(i,field){
+  const content=document.getElementById('ta-'+i)?.value||'';
+  const e=editors[i];
+  e.fields=e.fields.filter(f=>f!==field);e.customFields=e.customFields.filter(f=>f!==field);
+  save();renderPanel(i);
+  setTimeout(()=>{const t=document.getElementById('ta-'+i);if(t){t.value=content;validateJson(i);updateLineNums(i);}},10);
+}
+ 
+/* ── Search ── */
+function onSearch(i,val){
+  const s=searchState[i];s.q=val;s.idx=-1;s.matches=[];
+  const hEl=document.getElementById('hits-'+i);
+  if(!val.trim()){if(hEl)hEl.textContent='';return;}
+  const text=document.getElementById('ta-'+i)?.value||'';
+  const lower=text.toLowerCase(),q=val.toLowerCase();
+  let pos=0;
+  while(true){const ix=lower.indexOf(q,pos);if(ix===-1)break;s.matches.push(ix);pos=ix+1;}
+  if(hEl)hEl.textContent=s.matches.length?s.matches.length+' match'+(s.matches.length>1?'es':''):'none';
+}
+function onSearchKey(i,e){if(e.key==='Enter'){e.preventDefault();navSearch(i,e.shiftKey?-1:1);}}
+function navSearch(i,dir){
+  const s=searchState[i];if(!s.matches.length)return;
+  s.idx=(s.idx+dir+s.matches.length)%s.matches.length;
+  const ta=document.getElementById('ta-'+i);if(!ta)return;
+  ta.focus();ta.setSelectionRange(s.matches[s.idx],s.matches[s.idx]+s.q.length);
+  const hEl=document.getElementById('hits-'+i);if(hEl)hEl.textContent=(s.idx+1)+' / '+s.matches.length;
+}
+ 
+/* ── Line numbers ── */
+function updateLineNums(i){
+  const ta=document.getElementById('ta-'+i);
+  const ln=document.getElementById('ln-'+i);
+  if(!ta||!ln)return;
+  const lines=ta.value?ta.value.split('\n').length:1;
+  let html='';
+  for(let n=1;n<=lines;n++)html+=n+'\n';
+  ln.textContent=html;
+  // sync scroll
+  ln.parentElement.scrollTop=ta.scrollTop;
+}
+function syncScroll(i){
+  const ta=document.getElementById('ta-'+i);
+  const ln=document.getElementById('ln-'+i);
+  if(ta&&ln)ln.parentElement.style.setProperty('--scroll',ta.scrollTop+'px');
+  // Actually sync the line-nums-inner top offset
+  if(ta&&ln)ln.style.marginTop=(-ta.scrollTop)+'px';
+}
+ 
+/* ── JSON ── */
+function validateJson(i){
+  const ta=document.getElementById('ta-'+i);
+  const stEl=document.getElementById('st-'+i);
+  const wrap=document.getElementById('cw-'+i);
+  if(!ta||!stEl)return;
+  const v=ta.value.trim();
+  if(!v){ta.classList.remove('invalid');if(wrap)wrap.classList.remove('invalid-bg');stEl.textContent='';stEl.className='panel-status st-empty';return;}
+  try{JSON.parse(v);ta.classList.remove('invalid');if(wrap)wrap.classList.remove('invalid-bg');stEl.textContent='✓ Valid JSON';stEl.className='panel-status st-valid';}
+  catch(err){ta.classList.add('invalid');if(wrap)wrap.classList.add('invalid-bg');stEl.textContent='✗ '+err.message;stEl.className='panel-status st-invalid';}
+}
+function guid(){return crypto.randomUUID();}
+function replaceGuids(obj,fields){
+  if(Array.isArray(obj)){obj.forEach(x=>replaceGuids(x,fields));return;}
+  if(obj&&typeof obj==='object'){Object.keys(obj).forEach(k=>{if(fields.includes(k))obj[k]=guid();replaceGuids(obj[k],fields);});}
+}
+function generate(i){
+  const ta=document.getElementById('ta-'+i);
+  const warn=document.getElementById('warn-'+i);
+  if(!ta)return;warn.classList.remove('on');
+  if(!ta.value.trim()){alert('Paste JSON first.');return;}
+  try{
+    const json=JSON.parse(ta.value);
+    const checked=[...document.querySelectorAll('input[data-ei="'+i+'"]:checked')].map(x=>x.value);
+    const found=[];
+    function scan(o){if(Array.isArray(o)){o.forEach(scan);return;}if(o&&typeof o==='object')Object.keys(o).forEach(k=>{if(checked.includes(k))found.push(k);scan(o[k]);});}
+    scan(json);
+    const missing=checked.filter(x=>!found.includes(x));
+    if(missing.length){warn.textContent='⚠ Not found in JSON: '+missing.join(', ');warn.classList.add('on');}
+    replaceGuids(json,checked);
+    ta.value=JSON.stringify(json,null,2);
+    validateJson(i);updateLineNums(i);save();renderSidebar();
+  }catch(e){validateJson(i);alert('Invalid JSON');}
+}
+function copyPanel(i){
+  const ta=document.getElementById('ta-'+i);if(!ta?.value.trim()){alert('Nothing to copy.');return;}
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    const btn=document.getElementById('copybtn-'+i);
+    if(btn){btn.textContent='✓ Copied';setTimeout(()=>btn.textContent='Copy',1500);}
+  });
+}
+function clearPanel(i){
+  const ta=document.getElementById('ta-'+i);if(ta){ta.value='';validateJson(i);updateLineNums(i);}
+  const warn=document.getElementById('warn-'+i);if(warn)warn.classList.remove('on');
+  const e=editors[i];if(e.fileId){const f=files.find(f=>f.id===e.fileId);if(f){f.content='';save();renderSidebar();}}
+}
+function formatPanel(i){
+  const ta=document.getElementById('ta-'+i);if(!ta)return;
+  try{ta.value=JSON.stringify(JSON.parse(ta.value),null,2);validateJson(i);updateLineNums(i);}
+  catch{alert('Invalid JSON');}
+}
+function toggleWrap(i){const ta=document.getElementById('ta-'+i);if(ta)ta.classList.toggle('nowrap');}
+function generateAll(){[0,1].forEach(generate);}
+function formatAll(){[0,1].forEach(formatPanel);}
+ 
+/* ── Load file ── */
+document.addEventListener('focusin',e=>{
+  const p=e.target.closest('.editor-panel');
+  if(p)lastFocused=parseInt(p.dataset.idx||0);
+});
+function loadFileIntoEditor(fileId,idx){
+  const f=files.find(f=>f.id===fileId);if(!f)return;
+  editors[idx].fileId=fileId;
+  const ta=document.getElementById('ta-'+idx);
+  if(ta){ta.value=f.content||'';validateJson(idx);updateLineNums(idx);}
+  activeFileId=fileId;save();renderSidebar();updateTitles();
+}
+ 
+/* ── Sidebar render ── */
+function renderSidebar(){
+  const list=document.getElementById('fileList');
+  document.getElementById('fileCount').textContent=files.length+'/'+MAX_FILES;
+  list.innerHTML='';
+  if(!files.length){list.innerHTML='<div class="file-empty">No files yet.<br>Click <strong>+ New File</strong>.</div>';return;}
+  files.forEach(f=>{
+    const item=document.createElement('div');
+    item.className='file-item'+(f.id===activeFileId?' active':'')+(f.content?' has-content':'');
+    item.title='Click to load · Double-click to rename';
+    item.innerHTML=`<span class="file-icon">{}</span><span class="file-name">${esc(f.name)}</span><span class="file-dot"></span><button class="file-del" onclick="event.stopPropagation();deleteFile('${f.id}')" title="Delete">✕</button>`;
+    item.addEventListener('click',()=>{activeFileId=f.id;loadFileIntoEditor(f.id,lastFocused);});
+    item.addEventListener('dblclick',e=>{e.stopPropagation();renameFile(f.id);});
+    list.appendChild(item);
+  });
+}
+function updateTitles(){
+  [0,1].forEach(i=>{
+    const el=document.getElementById('ptitle-'+i);if(!el)return;
+    const f=files.find(f=>f.id===editors[i].fileId);
+    el.textContent='Editor '+(i+1)+(f?' — '+f.name:'');
+  });
+}
+ 
+/* ── Panel render ── */
+function renderPanel(idx){
+  const panel=document.getElementById('panel-'+idx);if(!panel)return;
+  const e=editors[idx];
+  const f=e.fileId?files.find(fi=>fi.id===e.fileId):null;
+  const content=document.getElementById('ta-'+idx)?.value||(f?f.content:'');
+ 
+  const chips=e.fields.map(field=>{
+    const isCustom=e.customFields.includes(field);
+    return `<label class="field-chip"><input type="checkbox" checked data-ei="${idx}" value="${esc(field)}"/><span class="chip-check">✓</span><span>${esc(field)}</span>${isCustom?`<button class="chip-del" onclick="event.preventDefault();removeField(${idx},'${esc(field)}')" title="Remove">✕</button>`:''}</label>`;
+  }).join('');
+ 
+  panel.dataset.idx=idx;
+  panel.innerHTML=`
+    <div class="panel-header">
+      <span class="panel-title" id="ptitle-${idx}">Editor ${idx+1}${f?' — '+esc(f.name):''}</span>
+      <span class="panel-status st-empty" id="st-${idx}"></span>
+    </div>
+    <div class="search-row">
+      <div class="search-wrap">
+        <span class="search-ico">⌕</span>
+        <input class="search-input" id="s-${idx}" placeholder="Search… Enter to navigate" autocomplete="off" spellcheck="false"
+          oninput="onSearch(${idx},this.value)" onkeydown="onSearchKey(${idx},event)"/>
+      </div>
+      <button class="btn btn-icon btn-sm" onclick="navSearch(${idx},-1)" title="Prev (Shift+Enter)">↑</button>
+      <button class="btn btn-icon btn-sm" onclick="navSearch(${idx},1)" title="Next (Enter)">↓</button>
+      <span class="search-hits" id="hits-${idx}"></span>
+    </div>
+    <div class="fields-row">
+      ${chips}
+      <button class="btn btn-sm" style="font-size:11px;" onclick="toggleAddField(${idx})">+ Field</button>
+      <div class="add-field-row" id="add-row-${idx}">
+        <input class="add-field-input" id="add-inp-${idx}" placeholder="Field name"
+          onkeydown="if(event.key==='Enter')addField(${idx});if(event.key==='Escape')toggleAddField(${idx})"/>
+        <button class="btn btn-sm btn-primary" onclick="addField(${idx})">Add</button>
+        <button class="btn btn-sm" onclick="toggleAddField(${idx})">✕</button>
+      </div>
+    </div>
+    <div class="code-wrap" id="cw-${idx}">
+      <div class="line-nums" id="lnwrap-${idx}" style="overflow:hidden;">
+        <div class="line-nums-inner" id="ln-${idx}">1
+</div>
+      </div>
+      <textarea class="code-area" id="ta-${idx}"
+        placeholder="Paste JSON payload here…"
+        spellcheck="false"
+        oninput="validateJson(${idx});updateLineNums(${idx});"
+        onscroll="syncScroll(${idx})"
+        onblur="save()"
+      >${esc(content)}</textarea>
+    </div>
+    <div class="warn-bar" id="warn-${idx}"></div>
+    <div class="action-bar">
+      <button class="btn btn-success btn-sm" onclick="generate(${idx})">▶ Generate</button>
+      <button class="btn btn-sm" id="copybtn-${idx}" onclick="copyPanel(${idx})">Copy</button>
+      <div class="action-sep"></div>
+      <button class="btn btn-sm" onclick="formatPanel(${idx})">{ } Format</button>
+      <button class="btn btn-sm" onclick="toggleWrap(${idx})">⇌ Wrap</button>
+      <div class="action-sep"></div>
+      <button class="btn btn-danger btn-sm" onclick="clearPanel(${idx})">Clear</button>
+    </div>`;
+ 
+  validateJson(idx);
+  updateLineNums(idx);
+}
+ 
+function renderAll(){renderPanel(0);renderPanel(1);renderSidebar();}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+ 
+/* ── Init ── */
+load();
+renderAll();
+// Apply saved sidebar state
+if(!sidebarOpen){
+  const sb=document.getElementById('sidebar');
+  sb.classList.add('collapsed');
+  sb.querySelector('.toggle-sidebar').textContent='▶';
+}
+window.addEventListener('beforeunload',save);
+</script>
 </body>
 </html>
