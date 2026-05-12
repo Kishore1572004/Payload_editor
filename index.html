@@ -720,7 +720,23 @@ function validateJson(i) {
     cw?.classList.add('invalid-bg');
     const parserIssue = parseJsonErrorDetails(err.message, ta.value);
     const likely = detectLikelyIssues(ta.value);
-    issueState[i].items = [parserIssue, ...likely];
+    let items = [...likely];
+
+    // Parser often points to the next line where parsing broke.
+    // If we already detected a missing-comma root cause on the previous line,
+    // prefer that single source line and hide the redundant parser line.
+    const prevLineComma = (parserIssue.line != null)
+      ? likely.find(x =>
+          x.line === parserIssue.line - 1 &&
+          /missing comma/i.test(x.msg)
+        )
+      : null;
+
+    if (!prevLineComma) {
+      items = [parserIssue, ...items];
+    }
+
+    issueState[i].items = items;
     renderIssues(i);
     stEl.textContent='✗ Invalid JSON'; stEl.className='panel-status st-invalid';
   }
