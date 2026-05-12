@@ -145,7 +145,7 @@ mark.h{
   color:transparent;
 }
 mark.h.c{
-  background:rgba(255,130,0,0.72);
+  background:rgba(255,210,0,0.5);
   border-radius:2px;
   color:transparent;
 }
@@ -243,8 +243,8 @@ let editors = [
   {fields:[...DEFAULT_FIELDS],customFields:[],content:'',title:'Editor 2'}
 ];
 let search = [
-  {q:'',matches:[],cur:-1,opts:{matchCase:true,wholeWord:true,regex:false}},
-  {q:'',matches:[],cur:-1,opts:{matchCase:true,wholeWord:true,regex:false}}
+  {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:true,regex:false}},
+  {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:true,regex:false}}
 ];
 let modalCb = null;
 let _lhPx   = 0;
@@ -605,7 +605,8 @@ function clearPanel(i) {
   document.getElementById('warn-'+i)?.classList.remove('on');
   const si = document.getElementById('s-'+i);
   if (si) si.value='';
-  search[i] = {q:'',matches:[],cur:-1};
+  const prevOpts = search[i]?.opts || {matchCase:false,wholeWord:true,regex:false};
+  search[i] = {q:'',matches:[],cur:-1,opts:prevOpts};
   document.getElementById('hits-'+i) && (document.getElementById('hits-'+i).textContent='');
   editors[i].content='';
   onInput(i); save();
