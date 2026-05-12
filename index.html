@@ -173,6 +173,8 @@ mark.h.c{
 }
 .ta::selection{background:rgba(59,107,219,0.22);}
 .ta::placeholder{color:var(--text-3);}
+.ta.nowrap{white-space:pre;word-break:normal;overflow-x:auto;}
+.hl-body.nowrap{white-space:pre;word-break:normal;}
 
 .warn-bar{display:none;padding:4px 12px;background:var(--warning-bg);border-top:1px solid #fde68a;font-size:11px;color:var(--warning);flex-shrink:0;}
 .warn-bar.on{display:block;}
@@ -201,6 +203,7 @@ mark.h.c{
   <div class="topbar-sep"></div>
   <span class="topbar-sub">JSON · GUID Generator</span>
   <div class="topbar-right">
+    <button class="btn" id="wrapToggle" onclick="toggleWrap()">Wrap: On</button>
     <button class="btn" onclick="formatAll()">{ } Format All</button>
     <button class="btn btn-primary" onclick="generateAll()">▶ Generate All</button>
   </div>
@@ -243,9 +246,10 @@ let editors = [
   {fields:[...DEFAULT_FIELDS],customFields:[],content:'',title:'Editor 2'}
 ];
 let search = [
-  {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:true,regex:false}},
-  {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:true,regex:false}}
+  {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:false,regex:false}},
+  {q:'',matches:[],cur:-1,opts:{matchCase:false,wholeWord:false,regex:false}}
 ];
+let isWrap = true;
 let modalCb = null;
 let _lhPx   = 0;
 
@@ -305,7 +309,8 @@ function save() {
       editors: editors.map(e => ({
         fields:e.fields, customFields:e.customFields,
         content:e.content, title:e.title
-      }))
+      })),
+      isWrap
     }));
   } catch(_) {}
 }
@@ -321,6 +326,7 @@ function load() {
         title:       e.title       || 'Editor '+(i+1)
       }));
     }
+    if (typeof s.isWrap === 'boolean') isWrap = s.isWrap;
   } catch(_) {}
 }
 
@@ -409,7 +415,7 @@ function rebuildLn(i) {
   const lh     = getLhPx();
   const text   = ta.value;
   const lines  = text ? text.split('\n') : [''];
-  const counts = visualRowCounts(text || '', contentW);
+  const counts = isWrap ? visualRowCounts(text || '', contentW) : lines.map(() => 1);
 
   let html = '';
   for (let n = 0; n < lines.length; n++) {
@@ -432,7 +438,7 @@ function syncScroll(i) {
 }
 
 /* ═══════════════════════════════════════════
-   SEARCH & HIGHLIGHT  —  case-sensitive
+  SEARCH & HIGHLIGHT
 ═══════════════════════════════════════════ */
 function onSearch(i, val) {
   const s = search[i];
@@ -442,28 +448,47 @@ function onSearch(i, val) {
   const ta = document.getElementById('ta-'+i);
   if (!ta) return;
   const text = ta.value;
-  const opts = s.opts || {matchCase:true,wholeWord:true,regex:false};
-  const flags = opts.matchCase ? 'g' : 'gi';
-  let re;
-  try {
-    if (opts.regex) {
-      re = new RegExp(val, flags);
-    } else {
-      const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = opts.wholeWord ? ('\\b' + escaped + '\\b') : escaped;
-      re = new RegExp(pattern, flags);
+  const opts = s.opts || {matchCase:false,wholeWord:false,regex:false};
+  if (!opts.regex) {
+    const hay = opts.matchCase ? text : text.toLowerCase();
+    const needle = opts.matchCase ? val : val.toLowerCase();
+    let pos = 0;
+    while (true) {
+      const ix = hay.indexOf(needle, pos);
+      if (ix === -1) break;
+      if (!opts.wholeWord || isWholeWordAt(text, ix, val.length)) s.matches.push(ix);
+      pos = ix + 1;
     }
-  } catch (_) {
-    if (hEl) hEl.textContent = 'invalid regex';
-    renderHl(i);
-    return;
+  } else {
+    const flags = opts.matchCase ? 'g' : 'gi';
+    let re;
+    try {
+      re = new RegExp(val, flags);
+    } catch (_) {
+      if (hEl) hEl.textContent = 'invalid regex';
+      renderHl(i);
+      return;
+    }
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      if (!m[0]) { re.lastIndex += 1; continue; }
+      s.matches.push(m.index);
+    }
   }
-  let m;
-  while ((m = re.exec(text)) !== null) { s.matches.push(m.index); }
   if (hEl) hEl.textContent = s.matches.length
     ? s.matches.length+' match'+(s.matches.length>1?'es':'')
     : 'none';
   renderHl(i);
+}
+
+function isWordChar(ch) {
+  return !!ch && /[A-Za-z0-9_]/.test(ch);
+}
+
+function isWholeWordAt(text, start, len) {
+  const prev = start > 0 ? text[start - 1] : '';
+  const next = start + len < text.length ? text[start + len] : '';
+  return !isWordChar(prev) && !isWordChar(next);
 }
 
 function toggleSearchOpt(i, key) {
@@ -605,11 +630,30 @@ function clearPanel(i) {
   document.getElementById('warn-'+i)?.classList.remove('on');
   const si = document.getElementById('s-'+i);
   if (si) si.value='';
-  const prevOpts = search[i]?.opts || {matchCase:false,wholeWord:true,regex:false};
+  const prevOpts = search[i]?.opts || {matchCase:false,wholeWord:false,regex:false};
   search[i] = {q:'',matches:[],cur:-1,opts:prevOpts};
   document.getElementById('hits-'+i) && (document.getElementById('hits-'+i).textContent='');
   editors[i].content='';
   onInput(i); save();
+}
+
+function applyWrap(i) {
+  const ta = document.getElementById('ta-'+i);
+  const hlb = document.getElementById('hl-body-'+i);
+  if (ta) ta.classList.toggle('nowrap', !isWrap);
+  if (hlb) hlb.classList.toggle('nowrap', !isWrap);
+  rebuildLn(i);
+  renderHl(i);
+  syncScroll(i);
+}
+
+function toggleWrap() {
+  isWrap = !isWrap;
+  applyWrap(0);
+  applyWrap(1);
+  const b = document.getElementById('wrapToggle');
+  if (b) b.textContent = isWrap ? 'Wrap: On' : 'Wrap: Off';
+  save();
 }
 
 function formatPanel(i) {
@@ -717,6 +761,7 @@ function renderPanel(idx) {
     </div>`;
 
   requestAnimationFrame(() => {
+    applyWrap(idx);
     validateJson(idx);
     rebuildLn(idx);
     renderHl(idx);
@@ -729,6 +774,8 @@ function renderPanel(idx) {
 load();
 renderPanel(0);
 renderPanel(1);
+const _wb = document.getElementById('wrapToggle');
+if (_wb) _wb.textContent = isWrap ? 'Wrap: On' : 'Wrap: Off';
 
 let _rt;
 window.addEventListener('resize', () => {
