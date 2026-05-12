@@ -64,6 +64,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .search-input:focus{border-color:var(--border-focus);}
 .search-input::placeholder{color:var(--text-3);}
 .search-hits{font-family:var(--mono);font-size:10.5px;color:var(--text-3);min-width:58px;text-align:right;white-space:nowrap;}
+.search-opt-group{display:flex;align-items:center;gap:3px;}
+.search-opt{font-family:var(--mono);font-size:10.5px;line-height:1;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text-3);cursor:pointer;min-width:26px;text-align:center;}
+.search-opt:hover{background:var(--surface2);color:var(--text-2);}
+.search-opt.on{background:var(--accent-bg);border-color:#a8bef0;color:var(--accent);}
 
 .fields-row{padding:5px 8px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;background:var(--surface);flex-shrink:0;}
 .field-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:11px;color:var(--text-2);transition:all .1s;user-select:none;}
@@ -238,7 +242,10 @@ let editors = [
   {fields:[...DEFAULT_FIELDS],customFields:[],content:'',title:'Editor 1'},
   {fields:[...DEFAULT_FIELDS],customFields:[],content:'',title:'Editor 2'}
 ];
-let search = [{q:'',matches:[],cur:-1},{q:'',matches:[],cur:-1}];
+let search = [
+  {q:'',matches:[],cur:-1,opts:{matchCase:true,wholeWord:true,regex:false}},
+  {q:'',matches:[],cur:-1,opts:{matchCase:true,wholeWord:true,regex:false}}
+];
 let modalCb = null;
 let _lhPx   = 0;
 
@@ -435,18 +442,38 @@ function onSearch(i, val) {
   const ta = document.getElementById('ta-'+i);
   if (!ta) return;
   const text = ta.value;
-  // Exact / case-sensitive match — 'source' ≠ 'Source' ≠ 'SOURCE'
-  let pos = 0;
-  for (;;) {
-    const ix = text.indexOf(val, pos);
-    if (ix === -1) break;
-    s.matches.push(ix);
-    pos = ix + 1;
+  const opts = s.opts || {matchCase:true,wholeWord:true,regex:false};
+  const flags = opts.matchCase ? 'g' : 'gi';
+  let re;
+  try {
+    if (opts.regex) {
+      re = new RegExp(val, flags);
+    } else {
+      const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = opts.wholeWord ? ('\\b' + escaped + '\\b') : escaped;
+      re = new RegExp(pattern, flags);
+    }
+  } catch (_) {
+    if (hEl) hEl.textContent = 'invalid regex';
+    renderHl(i);
+    return;
   }
+  let m;
+  while ((m = re.exec(text)) !== null) { s.matches.push(m.index); }
   if (hEl) hEl.textContent = s.matches.length
     ? s.matches.length+' match'+(s.matches.length>1?'es':'')
     : 'none';
   renderHl(i);
+}
+
+function toggleSearchOpt(i, key) {
+  const s = search[i];
+  if (!s?.opts || !(key in s.opts)) return;
+  s.opts[key] = !s.opts[key];
+  const el = document.getElementById(`sopt-${key}-${i}`);
+  if (el) el.classList.toggle('on', s.opts[key]);
+  const val = document.getElementById('s-'+i)?.value || '';
+  onSearch(i, val);
 }
 
 function onSearchKey(i, e) {
@@ -639,6 +666,11 @@ function renderPanel(idx) {
           autocomplete="off" spellcheck="false"
           oninput="onSearch(${idx},this.value)"
           onkeydown="onSearchKey(${idx},event)"/>
+      </div>
+      <div class="search-opt-group" title="Search options">
+        <button class="search-opt${search[idx].opts.matchCase?' on':''}" id="sopt-matchCase-${idx}" onclick="toggleSearchOpt(${idx},'matchCase')" title="Match Case">Aa</button>
+        <button class="search-opt${search[idx].opts.wholeWord?' on':''}" id="sopt-wholeWord-${idx}" onclick="toggleSearchOpt(${idx},'wholeWord')" title="Whole Word">ab</button>
+        <button class="search-opt${search[idx].opts.regex?' on':''}" id="sopt-regex-${idx}" onclick="toggleSearchOpt(${idx},'regex')" title="Use Regex">.*</button>
       </div>
       <button class="btn btn-icon btn-sm" onclick="navSearch(${idx},-1)" title="Previous">↑</button>
       <button class="btn btn-icon btn-sm" onclick="navSearch(${idx},1)"  title="Next">↓</button>
